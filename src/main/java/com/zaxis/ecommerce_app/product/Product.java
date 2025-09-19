@@ -1,5 +1,7 @@
 package com.zaxis.ecommerce_app.product;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.zaxis.ecommerce_app.shared.BigDecimalDeserializer;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -26,6 +28,7 @@ public class Product {
 
     @NotNull(message = "Cena nie może być pusta")
     @Positive(message = "Cena musi być dodatnia")
+    @JsonDeserialize(using = BigDecimalDeserializer.class)
     private BigDecimal price;
 
     @NotNull(message = "Ilość nie może być pusta")
