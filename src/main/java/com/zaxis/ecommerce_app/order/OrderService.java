@@ -9,6 +9,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -17,7 +20,7 @@ public class OrderService {
     private final UserRepository userRepository;
 
     @Transactional
-    public Order createOrder(OrderDtos.OrderRequestDto orderRequestDto) {
+    public OrderDtos.OrderResponseDto createOrder(OrderDtos.OrderRequestDto orderRequestDto) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalStateException("Nie znaleziono użytkownika"));
@@ -44,6 +47,23 @@ public class OrderService {
             newOrder.getItems().add(orderItem);
         }
 
-        return orderRepository.save(newOrder);
+        return mapOrderToResponseDto(orderRepository.save(newOrder));
+    }
+
+    private OrderDtos.OrderResponseDto mapOrderToResponseDto(Order order) {
+        List<OrderDtos.OrderItemResponseDto> itemDtos = order.getItems().stream()
+                .map(item -> new OrderDtos.OrderItemResponseDto(
+                        item.getProduct().getId(),
+                        item.getProduct().getName(),
+                        item.getQuantity(),
+                        item.getPrice()
+                )).collect(Collectors.toList());
+
+        return new OrderDtos.OrderResponseDto(
+                order.getId(),
+                order.getOrderDate(),
+                order.getStatus(),
+                itemDtos
+        );
     }
 }

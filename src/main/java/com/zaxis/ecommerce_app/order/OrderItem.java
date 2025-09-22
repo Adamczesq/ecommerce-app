@@ -1,5 +1,6 @@
 package com.zaxis.ecommerce_app.order;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.zaxis.ecommerce_app.product.Product;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -22,6 +23,7 @@ public class OrderItem {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
+    @JsonManagedReference
     @ManyToOne
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;

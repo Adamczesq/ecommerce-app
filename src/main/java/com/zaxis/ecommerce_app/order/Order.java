@@ -1,5 +1,6 @@
 package com.zaxis.ecommerce_app.order;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.zaxis.ecommerce_app.user.User;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -31,6 +32,7 @@ public class Order {
         status = "NEW";
     }
 
+    @JsonBackReference
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 }

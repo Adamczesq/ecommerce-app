@@ -13,9 +13,9 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<Order> createOrder(@RequestBody OrderDtos.OrderRequestDto orderRequestDto) {
+    public ResponseEntity<OrderDtos.OrderResponseDto> createOrder(@RequestBody OrderDtos.OrderRequestDto orderRequestDto) {
         try {
-            Order newOrder = orderService.createOrder(orderRequestDto);
+            OrderDtos.OrderResponseDto newOrder = orderService.createOrder(orderRequestDto);
             return new ResponseEntity<>(newOrder, HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
