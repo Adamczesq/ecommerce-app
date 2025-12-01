@@ -24,7 +24,7 @@ public class OrderService {
     private final CartRepository cartRepository;
 
     @Transactional
-    public Order createOrderFromCart(Long cartId) {
+    public OrderDtos.OrderResponseDto createOrderFromCart(Long cartId) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalStateException("Nie znaleziono użytkownika"));
@@ -43,20 +43,7 @@ public class OrderService {
         newOrder.setUser(user);
 
         for (CartItem cartItem : cart.getItems()) {
-            Product product = cartItem.getProduct();
-
-            if (product.getQuantity() < cartItem.getQuantity()) {
-                throw new IllegalStateException("Niewystarczająca ilość produktu: " + product.getName());
-            }
-
-            product.setQuantity(product.getQuantity() - cartItem.getQuantity());
-            productRepository.save(product);
-
-            OrderItem orderItem = new OrderItem();
-            orderItem.setProduct(product);
-            orderItem.setQuantity(cartItem.getQuantity());
-            orderItem.setPrice(product.getPrice());
-            orderItem.setOrder(newOrder);
+            OrderItem orderItem = getOrderItem(cartItem, newOrder);
             newOrder.getItems().add(orderItem);
         }
 
@@ -65,7 +52,24 @@ public class OrderService {
         cart.getItems().clear();
         cartRepository.save(cart);
 
-        return savedOrder;
+        return mapOrderToResponseDto(savedOrder);
+    }
+
+    private static OrderItem getOrderItem(final CartItem cartItem, final Order newOrder) {
+        Product product = cartItem.getProduct();
+
+        if (product.getQuantity() < cartItem.getQuantity()) {
+            throw new IllegalStateException("Niewystarczająca ilość produktu: " + product.getName());
+        }
+
+        product.setQuantity(product.getQuantity() - cartItem.getQuantity());
+
+        OrderItem orderItem = new OrderItem();
+        orderItem.setProduct(product);
+        orderItem.setQuantity(cartItem.getQuantity());
+        orderItem.setPrice(product.getPrice());
+        orderItem.setOrder(newOrder);
+        return orderItem;
     }
 
     @Transactional
@@ -86,7 +90,6 @@ public class OrderService {
             }
 
             product.setQuantity(product.getQuantity() - itemDto.quantity());
-            productRepository.save(product);
 
             OrderItem orderItem = new OrderItem();
             orderItem.setProduct(product);

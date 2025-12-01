@@ -2,10 +2,7 @@ package com.zaxis.ecommerce_app.product;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.zaxis.ecommerce_app.shared.BigDecimalDeserializer;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -34,4 +31,7 @@ public class Product {
     @NotNull(message = "Ilość nie może być pusta")
     @Min(value = 0, message = "Ilość nie może być ujemna")
     private int quantity;
+
+    @Version
+    private Long version;
 }
