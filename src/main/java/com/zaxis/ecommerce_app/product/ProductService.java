@@ -12,8 +12,10 @@ public class ProductService {
 
     private final ProductRepository productRepository;
 
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
+    public List<ProductDto> getAllProducts() {
+        return productRepository.findAll().stream()
+                .map(this::mapToDto)
+                .toList();
     }
 
     public Optional<Product> getProductById(Long id) {
@@ -22,5 +24,15 @@ public class ProductService {
 
     public Product addProduct(Product product) {
         return productRepository.save(product);
+    }
+
+    private ProductDto mapToDto(Product product) {
+        return new ProductDto(
+                product.getId(),
+                product.getName(),
+                product.getDescription(),
+                product.getPrice(),
+                product.getQuantity()
+        );
     }
 }

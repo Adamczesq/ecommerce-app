@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,7 +44,7 @@ public class OrderService {
         newOrder.setUser(user);
 
         for (CartItem cartItem : cart.getItems()) {
-            OrderItem orderItem = getOrderItem(cartItem, newOrder);
+            OrderItem orderItem = getOrderItemFromCartItem(cartItem, newOrder);
             newOrder.getItems().add(orderItem);
         }
 
@@ -55,7 +56,7 @@ public class OrderService {
         return mapOrderToResponseDto(savedOrder);
     }
 
-    private static OrderItem getOrderItem(final CartItem cartItem, final Order newOrder) {
+    private static OrderItem getOrderItemFromCartItem(final CartItem cartItem, final Order newOrder) {
         Product product = cartItem.getProduct();
 
         if (product.getQuantity() < cartItem.getQuantity()) {
@@ -78,12 +79,25 @@ public class OrderService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalStateException("Nie znaleziono użytkownika"));
 
+        List<Long> productIds = orderRequestDto.items().stream()
+                .map(OrderDtos.OrderItemDto::productId)
+                .toList();
+
+        List<Product> products = productRepository.findAllById(productIds);
+
+        Map<Long, Product> productMap = products.stream()
+                .collect(Collectors.toMap(Product::getId, p -> p));
+
+
         Order newOrder = new Order();
         newOrder.setUser(user);
 
         for (OrderDtos.OrderItemDto itemDto : orderRequestDto.items()) {
-            Product product = productRepository.findById(itemDto.productId())
-                    .orElseThrow(() -> new IllegalArgumentException("Nie znaleziono produktu o ID: " + itemDto.productId()));
+            Product product = productMap.get(itemDto.productId());
+
+            if (product == null) {
+                throw new IllegalArgumentException("Nie znaleziono produktu o ID: " + itemDto.productId());
+            }
 
             if (product.getQuantity() < itemDto.quantity()) {
                 throw new IllegalStateException("Niewystarczająca ilość produktu: " + product.getName());
