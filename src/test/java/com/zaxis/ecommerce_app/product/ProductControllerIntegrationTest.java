@@ -2,21 +2,17 @@ package com.zaxis.ecommerce_app.product;
 
 import com.zaxis.ecommerce_app.shared.AbstractIntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@Transactional
 class ProductControllerIntegrationTest extends AbstractIntegrationTest {
 
     @Test
@@ -75,5 +71,20 @@ class ProductControllerIntegrationTest extends AbstractIntegrationTest {
                         .content(productWithCommaInPrice))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.price").value(149.99));
+    }
+
+    @Test
+    void shouldThrowConflict_whenOptimisticLockingOccurs() throws Exception {
+        Product productUserA = productRepository.findById(product1.getId()).orElseThrow();
+        Product productUserB = productRepository.findById(product1.getId()).orElseThrow();
+
+        productUserA.setQuantity(productUserA.getQuantity() - 1);
+        productRepository.saveAndFlush(productUserA);
+
+        productUserB.setQuantity(productUserB.getQuantity() - 10);
+
+        assertThrows(ObjectOptimisticLockingFailureException.class, () -> {
+            productRepository.saveAndFlush(productUserB);
+        });
     }
 }

@@ -1,19 +1,28 @@
 package com.zaxis.ecommerce_app.shared;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zaxis.ecommerce_app.cart.CartItemRepository;
+import com.zaxis.ecommerce_app.cart.CartRepository;
 import com.zaxis.ecommerce_app.cart.CartService;
+import com.zaxis.ecommerce_app.order.OrderRepository;
 import com.zaxis.ecommerce_app.product.Product;
 import com.zaxis.ecommerce_app.product.ProductRepository;
 import com.zaxis.ecommerce_app.user.User;
 import com.zaxis.ecommerce_app.user.UserRepository;
 import com.zaxis.ecommerce_app.user.UserService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
 
@@ -21,7 +30,20 @@ import java.math.BigDecimal;
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@Testcontainers
+@Disabled("Na Windowsie wyłączone z powodu problemów prawdopodbnie z proxy sieciowym.")
 public abstract class AbstractIntegrationTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
+    }
 
     @Autowired
     protected MockMvc mockMvc;
@@ -31,6 +53,12 @@ public abstract class AbstractIntegrationTest {
     protected UserRepository userRepository;
     @Autowired
     protected ProductRepository productRepository;
+    @Autowired
+    protected CartItemRepository cartItemRepository;
+    @Autowired
+    protected CartRepository cartRepository;
+    @Autowired
+    protected OrderRepository orderRepository;
     @Autowired
     protected PasswordEncoder passwordEncoder;
     @Autowired
@@ -45,7 +73,11 @@ public abstract class AbstractIntegrationTest {
     @BeforeEach
     void setUp() {
         userRepository.deleteAll();
+        cartItemRepository.deleteAll();
+        cartRepository.deleteAll();
         productRepository.deleteAll();
+        orderRepository.deleteAll();
+        userRepository.deleteAll();
 
         testUser = new User();
         testUser.setUsername("testuser");
